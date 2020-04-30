@@ -11,6 +11,7 @@ use crate::event_codes::*;
 
 impl EventHandler {
     pub fn on_configure_request(wm: &mut WindowManager, event: xlib::XEvent) {
+        println!("configure request occured!");
         let conf_event = xlib::XConfigureRequestEvent::from(event);
         let mut changes = xlib::XWindowChanges {
             x: conf_event.x,
@@ -43,6 +44,7 @@ impl EventHandler {
         }
     }
     pub fn on_map_request(wm: &mut WindowManager, event: xlib::XEvent) {
+        println!("map request occured!");
         let mut map_event = xlib::XMapRequestEvent::from(event);
         frame_window(&mut map_event.window, wm);
         unsafe {
@@ -50,6 +52,7 @@ impl EventHandler {
         }
     }
     pub fn on_unmap_notify(wm: &mut WindowManager, window: *mut xlib::Window) {
+        println!("unmap request occured!");
         unsafe {
             let frame = wm.clients.get(&*window).unwrap();
             xlib::XUnmapWindow(wm.window_system.display, *frame);

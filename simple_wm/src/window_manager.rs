@@ -1,19 +1,21 @@
+use crate::clients::client::Client;
+use crate::clients::client::BORDER_WIDTH;
 use crate::data::{Position, Size};
-use crate::event_codes::*;
-use crate::event_handler::EventHandler;
-use crate::main_window::WindowSystem;
+use crate::window_system::WindowSystem;
+use std::ffi::CString;
 use std::mem::MaybeUninit;
 use std::os::raw::c_int;
+use std::thread::spawn;
 use x11::xlib;
 use x11::xlib::Display;
-use std::thread::spawn;
 use x11::xlib::Window;
 
 use std::collections::HashMap;
 
 pub struct WindowManager {
     pub window_system: WindowSystem,
-    pub clients: HashMap<Window, Window>,
+    /// The key is the actual window id, the value is the client (which has the same window field)
+    pub clients: HashMap<Window, Client>,
 
     /// The cursor position at the start of a window move / resize
     pub drag_start_position: Position,
@@ -39,32 +41,51 @@ impl WindowManager {
 
     pub fn run(&mut self) {
         self.init();
-                spawn(move || {
-                    std::process::Command::new("alacritty").spawn();
-                });
         loop {
-            let mut event = unsafe {
+            let event = unsafe {
                 let mut event: xlib::XEvent = MaybeUninit::uninit().assume_init();
                 xlib::XNextEvent(self.window_system.display, &mut event);
                 event
             };
             let event_type = event.get_type();
-            match event_type as usize {
-                ConfigureRequest => {
-                    EventHandler::on_configure_request(self, event);
+            match event_type as i32 {
+                xlib::ConfigureRequest => {
+                    let conf_event = xlib::XConfigureRequestEvent::from(event);
+
+                    match self.clients.get(&conf_event.window) {
+                        Some(client) => {
+                            /*//Client already exists --> configure him
+                            client.configure(
+                                &self.window_system,
+                                conf_event,
+                                0,
+                                0,
+                                self.window_system.width,
+                                self.window_system.height,
+                            );*/
+                        }
+                        None => {
+                            //Client doesn't exist yet --> create it!
+                            let client: Client = Client::new(
+                                &self.window_system,
+                                conf_event,
+                                0,
+                                0,
+                                self.window_system.width,
+                                self.window_system.height,
+                            );
+                            self.clients.insert(conf_event.window, client);
+                        }
+                    };
                 }
-                MapRequest => {
-                    EventHandler::on_map_request(self, event);
-                }
-                UnmapNotify => {
-                    let mut unmap_notify = xlib::XUnmapEvent::from(event);
-                    if self.clients.contains_key(&unmap_notify.window)
-                        && unmap_notify.event != self.window_system.root
-                    {
-                        EventHandler::on_unmap_notify(self, &mut unmap_notify.window);
+                xlib::MapRequest => {
+                    let map_event = xlib::XMapRequestEvent::from(event);
+                    //Client is already known --> map him!
+                    if let Some(client) = self.clients.get_mut(&map_event.window) {
+                        client.map(&mut self.window_system);
                     }
                 }
-                ButtonPress => {
+                /*ButtonPress => {
                     EventHandler::on_button_press(self, event);
                 }
                 MotionNotify => {
@@ -82,7 +103,7 @@ impl WindowManager {
                 }
                 KeyPress => {
                     EventHandler::on_key_press(self, event);
-                }
+                }*/
                 _ => (),
             }
         }
@@ -106,9 +127,5 @@ impl WindowManager {
     ) -> c_int {
         println!("{:?}", *event);
         0
-    }
-
-    pub fn add_client(&mut self, top_lvl_window: Window, framed_window: Window) {
-        self.clients.insert(top_lvl_window, framed_window);
     }
 }
