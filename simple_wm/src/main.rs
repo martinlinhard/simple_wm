@@ -1,13 +1,11 @@
 #![allow(non_upper_case_globals)]
-mod data;
-//mod event_codes;
-//mod event_handler;
-mod window_system;
+mod client;
+mod config;
+mod key_handler;
+mod layout;
+mod tag;
 mod window_manager;
-
-mod clients;
-mod handlers;
-mod workspaces;
+mod window_system;
 
 use window_manager::WindowManager;
 
