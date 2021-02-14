@@ -90,9 +90,8 @@ impl WindowManager {
                     current_tag.add_new_window_if_not_exists(Client::new(conf_event));
 
                     // resize all the windows based on the current layout
-                    let windows = current_tag.get_windows();
                     self.current_layout
-                        .resize(windows, &self.config, &self.window_system);
+                        .resize(current_tag, &self.config, &self.window_system);
                 }
                 xlib::MapRequest => {
                     let map_event = xlib::XMapRequestEvent::from(event);
@@ -108,11 +107,11 @@ impl WindowManager {
                         tag.remove_window(&map_event.window);
                     }
                     let current_tag = &mut self.tags[self.current_workspace];
-                    let windows = current_tag.get_windows();
                     self.current_layout
-                        .resize(windows, &self.config, &self.window_system);
+                        .resize(current_tag, &self.config, &self.window_system);
 
                     // we are only cloning an arc here
+                    let windows = current_tag.get_windows();
                     let next_window = windows.iter().rev().next().cloned();
 
                     // at least  1 window present --> focus it!
@@ -172,7 +171,13 @@ impl WindowManager {
                         };
                         // if the combination is found --> execute its action
                         if let Some(action) = self.config.key_bindings.get_mut(&kc) {
-                            action.execute(&self.window_system, self.current_window);
+                            action.execute(
+                                &self.window_system,
+                                self.config.shift_by,
+                                self.current_window,
+                                &mut *self.current_layout,
+                                &mut self.tags[self.current_workspace],
+                            );
                         }
                     }
                 }

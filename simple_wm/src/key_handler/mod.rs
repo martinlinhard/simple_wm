@@ -19,6 +19,8 @@ pub enum Action {
 #[derive(Deserialize, Serialize, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum BuiltinCommand {
     Close,
+    MoveLeft,
+    MoveRight,
 }
 
 #[derive(Deserialize, Serialize, Clone, Copy, Eq, PartialEq, Hash, Debug)]

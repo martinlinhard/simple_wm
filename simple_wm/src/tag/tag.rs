@@ -1,7 +1,6 @@
 use crate::client::Client;
 use crate::tag::Tag;
 use crate::window_system::WindowSystem;
-use std::sync::Arc;
 use x11::xlib;
 use x11::xlib::Window;
 
@@ -12,7 +11,7 @@ impl Tag {
 
     pub fn add_new_window_if_not_exists(&mut self, client: Client) {
         if !self.window_contained(&client.window) {
-            self.windows.push(Arc::new(client));
+            self.windows.push(client);
         }
     }
 
@@ -20,8 +19,12 @@ impl Tag {
         self.windows.iter().any(|current| current.window == *window)
     }
 
-    pub fn get_windows(&self) -> &[Arc<Client>] {
+    pub fn get_windows(&self) -> &[Client] {
         &self.windows[..]
+    }
+
+    pub fn get_windows_mut(&mut self) -> &mut [Client] {
+        &mut self.windows[..]
     }
 
     pub fn map_window(&self, window: &Window, system: &WindowSystem) {
@@ -43,6 +46,40 @@ impl Tag {
                 xlib::RevertToParent,
                 xlib::CurrentTime,
             );
+        }
+    }
+
+    pub fn for_root_and_remainder<R, RS, S>(
+        &mut self,
+        mut root: R,
+        mut root_with_sub: RS,
+        mut remainder: S,
+    ) where
+        R: FnMut(&mut Client),
+        RS: FnMut(&mut Client, usize),
+        S: FnMut(&mut Client, usize),
+    {
+        let len = self.windows.len();
+        let mut iter = self.windows.iter_mut().rev();
+        match (iter.next(), iter.next()) {
+            // no window contained
+            (None, None) => (),
+            // literally impossible
+            (None, Some(_)) => (),
+            (Some(client), None) => {
+                root(client);
+            }
+            (Some(first_client), Some(second_client)) => {
+                // set first client
+                root_with_sub(first_client, len);
+
+                remainder(second_client, len);
+
+                // for all the remaining windows on the right side
+                for client in iter {
+                    remainder(client, len);
+                }
+            }
         }
     }
 

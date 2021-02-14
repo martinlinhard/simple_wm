@@ -3,6 +3,7 @@ mod client;
 mod config;
 mod key_handler;
 mod layout;
+mod models;
 mod tag;
 mod window_manager;
 mod window_system;

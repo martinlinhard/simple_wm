@@ -1,15 +1,24 @@
 pub mod stack_layout;
 
-use crate::client::Client;
 use crate::config::Config;
+use crate::tag::Tag;
 use crate::window_system::WindowSystem;
-use std::sync::Arc;
+use x11::xlib::Window;
 
 pub trait Layout {
-    fn resize(
+    fn resize(&mut self, tag: &mut Tag, config: &Config, system: &WindowSystem);
+    fn shift_left(
         &mut self,
-        clients: &[Arc<Client>],
-        config: &Config,
+        tag: &mut Tag,
+        shift_by: usize,
         system: &WindowSystem,
+        current: Option<Window>,
+    );
+    fn shift_right(
+        &mut self,
+        tag: &mut Tag,
+        shift_by: usize,
+        system: &WindowSystem,
+        current: Option<Window>,
     );
 }
