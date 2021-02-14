@@ -1,10 +1,6 @@
 use crate::window_system::WindowSystem;
 use x11::xlib;
 
-pub const BORDER_WIDTH: u32 = 0;
-pub const BORDER_COLOR: u64 = 0xff0000;
-pub const BG_COLOR: u64 = 0x0000ff;
-
 /// In simple_wm, a client basically represents the entire window a client sees,
 /// that is: The actual window + the frame (as we're reparenting) to draw a border
 #[derive(Eq, PartialEq, Debug, Hash)]

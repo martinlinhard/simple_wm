@@ -2,6 +2,7 @@ use crate::client::Client;
 use crate::tag::Tag;
 use crate::window_system::WindowSystem;
 use std::sync::Arc;
+use x11::xlib;
 use x11::xlib::Window;
 
 impl Tag {
@@ -30,7 +31,19 @@ impl Tag {
             .filter(|current| current.window == *window)
             .for_each(|client| {
                 client.map(system);
+                self.set_focus(&client.window, system);
             });
+    }
+
+    pub fn set_focus(&self, window: &Window, system: &WindowSystem) {
+        unsafe {
+            xlib::XSetInputFocus(
+                system.display,
+                *window,
+                xlib::RevertToParent,
+                xlib::CurrentTime,
+            );
+        }
     }
 
     pub fn remove_window(&mut self, window: &Window) {

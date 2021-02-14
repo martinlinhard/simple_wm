@@ -1,29 +1,27 @@
-mod key_binding;
+mod action;
 mod modifier;
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use std::hash::Hash;
 
-#[derive(Deserialize, Serialize)]
-pub struct KeyBinding {
-    pub modifiers: HashSet<Modifier>,
+#[derive(Deserialize, Serialize, Hash, Eq, PartialEq, Debug)]
+pub struct KeyCombination {
+    pub modifiers: Vec<Modifier>,
     pub key: Key,
-    pub action: Action,
 }
 
-#[derive(Deserialize, Serialize, Clone, Eq, PartialEq, Hash)]
+#[derive(Deserialize, Serialize, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum Action {
     Builtin(BuiltinCommand),
     Custom(Vec<String>),
 }
 
-#[derive(Deserialize, Serialize, Clone, Eq, PartialEq, Hash)]
+#[derive(Deserialize, Serialize, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum BuiltinCommand {
     Close,
 }
 
-#[derive(Deserialize, Serialize, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Deserialize, Serialize, Clone, Copy, Eq, PartialEq, Hash, Debug)]
 pub enum Modifier {
     Alt = 0x08,
     // windows key
@@ -32,8 +30,21 @@ pub enum Modifier {
     Shift = 0x01,
 }
 
-#[derive(Deserialize, Serialize, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Deserialize, Serialize, Clone, Copy, Eq, PartialEq, Hash, Debug)]
+#[allow(non_camel_case_types)]
 pub enum Key {
+    // Numbers
+    XK_0 = 0x030,
+    XK_1 = 0x031,
+    XK_2 = 0x032,
+    XK_3 = 0x033,
+    XK_4 = 0x034,
+    XK_5 = 0x035,
+    XK_6 = 0x036,
+    XK_7 = 0x037,
+    XK_8 = 0x038,
+    XK_9 = 0x039,
+
     // "Normal" keys
     XK_a = 0x061,
     XK_b = 0x062,
